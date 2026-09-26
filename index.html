@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>سباق السيارات 3D</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>سباق السيارات الواقعي</title>
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -15,12 +15,14 @@
       user-select: none;
       touch-action: none;
     }
+
     canvas {
       display: block;
       width: 100vw;
       height: 100vh;
-      background: linear-gradient(#7ec0ee, #cfe9ff);
+      background: linear-gradient(#5ab6ff, #cfe9ff 36%, #91d36c 36%, #4da35a 100%);
     }
+
     #hud {
       position: fixed;
       top: 16px;
@@ -30,10 +32,11 @@
       justify-content: space-between;
       font-size: 20px;
       font-weight: bold;
-      text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
-      z-index: 10;
+      z-index: 20;
       pointer-events: none;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
     }
+
     #startScreen {
       position: fixed;
       inset: 0;
@@ -41,29 +44,34 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      background: rgba(10,10,10,0.55);
-      z-index: 20;
+      background: rgba(0,0,0,0.4);
+      z-index: 30;
     }
+
     #startScreen h1 {
-      font-size: 42px;
-      margin: 0 0 10px 0;
+      margin: 0 0 8px 0;
+      font-size: clamp(36px, 6vw, 60px);
+      letter-spacing: 1px;
     }
+
     #startScreen p {
       margin: 0 0 20px 0;
-      font-size: 18px;
-      color: #dfefff;
+      font-size: clamp(16px, 3vw, 24px);
+      color: #edf6ff;
     }
+
     #startBtn {
       border: none;
-      background: #ff3b30;
-      color: white;
-      font-size: 22px;
+      border-radius: 18px;
+      background: linear-gradient(#ff4d4d, #d11616);
+      color: #fff;
+      font-size: clamp(18px, 3vw, 28px);
       font-weight: bold;
-      border-radius: 16px;
-      padding: 16px 28px;
+      padding: 16px 26px;
       cursor: pointer;
-      box-shadow: 0 8px 0 rgba(160,20,20,1);
+      box-shadow: 0 8px 0 rgba(110, 10, 18, 1);
     }
+
     #controls {
       position: fixed;
       left: 0;
@@ -72,29 +80,30 @@
       display: flex;
       justify-content: space-between;
       padding: 0 24px;
-      z-index: 15;
+      z-index: 25;
     }
+
     .btn {
-      width: 90px;
-      height: 70px;
+      width: 96px;
+      height: 72px;
+      border: 2px solid rgba(255,255,255,0.8);
       border-radius: 18px;
-      border: 2px solid rgba(255,255,255,0.7);
-      background: rgba(0,0,0,0.35);
+      background: rgba(0,0,0,0.34);
       color: white;
-      font-size: 36px;
+      font-size: 34px;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
   <div id="hud">
-    <div>السرعة: <span id="speed">0</span> km/h</div>
+    <div>السرعة: <span id="speed">0</span> كم/س</div>
     <div>النقاط: <span id="score">0</span></div>
   </div>
 
   <div id="startScreen">
-    <h1>🏎️ سباق السيارات</h1>
-    <p>تجنب السيارات وتقدم كلما أمكنك</p>
+    <h1>🏁 سباق السيارات الواقعي</h1>
+    <p>تجنب السيارات، حافظ على السرعة، وواصل التقدم</p>
     <button id="startBtn">ابدأ السباق</button>
   </div>
 
@@ -108,29 +117,30 @@
     document.body.appendChild(canvas);
     const ctx = canvas.getContext('2d');
 
-    const speedEl = document.getElementById('speed');
-    const scoreEl = document.getElementById('score');
+    const hudSpeed = document.getElementById('speed');
+    const hudScore = document.getElementById('score');
     const startScreen = document.getElementById('startScreen');
     const startBtn = document.getElementById('startBtn');
     const leftBtn = document.getElementById('leftBtn');
     const rightBtn = document.getElementById('rightBtn');
 
     let w = 0, h = 0;
-    let gameRunning = false;
+    let running = false;
     let score = 0;
     let speed = 0;
     let roadScroll = 0;
-    let laneX = 0;
-    let moveDir = 0;
+    let moveX = 0;
     let lastTime = 0;
-    let enemyTimer = 0;
+    let spawnTimer = 0;
+
+    const laneCenters = [];
 
     const player = {
       x: 0,
       y: 0,
-      w: 52,
-      h: 90,
-      color: '#ff3b30'
+      w: 58,
+      h: 108,
+      color: '#ff4d4d'
     };
 
     const enemies = [];
@@ -140,207 +150,252 @@
       h = window.innerHeight;
       canvas.width = w * devicePixelRatio;
       canvas.height = h * devicePixelRatio;
-      ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-
-      player.y = h * 0.82;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
       player.x = w / 2;
+      player.y = h * 0.82;
+      rebuildLaneCenters();
     }
 
-    function randomBetween(min, max) {
+    function rebuildLaneCenters() {
+      const roadHalf = w * 0.18;
+      const center = w / 2;
+      laneCenters.length = 0;
+      laneCenters.push(center - roadHalf * 0.62);
+      laneCenters.push(center);
+      laneCenters.push(center + roadHalf * 0.62);
+    }
+
+    function rand(min, max) {
       return Math.random() * (max - min) + min;
     }
 
     function spawnEnemy() {
-      const laneCount = 3;
-      const lane = Math.floor(Math.random() * laneCount);
-      const x = (w * 0.5) + (lane - 1) * (w * 0.18);
-      const y = -120;
-      const carW = 44;
-      const carH = 80;
-      const color = ['#3a86ff', '#f4d35e', '#8338ec', '#06d6a0'][Math.floor(Math.random() * 4)];
-      enemies.push({ x, y, w: carW, h: carH, color, lane });
+      const laneIndex = Math.floor(Math.random() * laneCenters.length);
+      const x = laneCenters[laneIndex];
+      const colors = ['#3a86ff', '#f4d35e', '#8338ec', '#06d6a0', '#df5b5b'];
+      enemies.push({
+        x,
+        y: -140,
+        w: 48,
+        h: 88,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      });
     }
 
     function startGame() {
-      gameRunning = true;
+      running = true;
       score = 0;
-      speed = 120;
+      speed = 130;
       roadScroll = 0;
-      laneX = 0;
+      moveX = 0;
       enemies.length = 0;
+      spawnTimer = 0.8;
       startScreen.style.display = 'none';
+      hudSpeed.textContent = '0';
+      hudScore.textContent = '0';
     }
 
     function update(dt) {
-      if (!gameRunning) return;
+      if (!running) return;
 
-      speed = Math.min(260, speed + dt * 18);
-      roadScroll += speed * dt * 0.7;
-      score += dt * speed * 0.18;
-
-      laneX += moveDir * dt * 420;
-      player.x += moveDir * dt * 430;
+      speed = Math.min(260, speed + dt * 14);
+      roadScroll += speed * dt * 0.9;
+      score += dt * speed * 0.17;
 
       const roadHalf = w * 0.18;
-      const leftLimit = w / 2 - roadHalf + 30;
-      const rightLimit = w / 2 + roadHalf - 30;
+      const leftLimit = w / 2 - roadHalf * 0.72;
+      const rightLimit = w / 2 + roadHalf * 0.72;
+
+      player.x += moveX * dt * 450;
       player.x = Math.max(leftLimit, Math.min(rightLimit, player.x));
 
-      enemyTimer -= dt;
-      if (enemyTimer <= 0) {
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) {
         spawnEnemy();
-        enemyTimer = Math.max(0.6, 1.2 - speed / 260);
+        spawnTimer = Math.max(0.6, 1.25 - speed / 220);
       }
 
       for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         e.y += (speed * dt) + 40 * dt;
 
-        if (e.y > h + 150) {
+        if (e.y > h + 120) {
           enemies.splice(i, 1);
           continue;
         }
 
-        const collides = Math.abs(player.x - e.x) < (player.w + e.w) * 0.55 &&
-                        Math.abs(player.y - e.y) < (player.h + e.h) * 0.55;
+        const collides = Math.abs(player.x - e.x) < (player.w + e.w) * 0.48 &&
+                         Math.abs(player.y - e.y) < (player.h + e.h) * 0.46;
 
         if (collides) {
-          gameRunning = false;
+          running = false;
           startScreen.style.display = 'flex';
-          startScreen.innerHTML = '<h1>انتهت الجولة</h1><p>النقاط: ' + Math.floor(score) + '</p><button id="startBtn">إعادة اللعب</button>';
+          startScreen.innerHTML = '<h1>انتهت الجولة</h1><p>نقاطك: ' + Math.floor(score) + '</p><button id="startBtn">إعادة اللعب</button>';
           document.getElementById('startBtn').addEventListener('click', startGame);
-          speed = 0;
           return;
         }
       }
 
-      speedEl.textContent = Math.floor(speed);
-      scoreEl.textContent = Math.floor(score);
+      hudSpeed.textContent = Math.floor(speed);
+      hudScore.textContent = Math.floor(score);
+    }
+
+    function drawSky() {
+      const sky = ctx.createLinearGradient(0, 0, 0, h * 0.5);
+      sky.addColorStop(0, '#5db8ff');
+      sky.addColorStop(0.7, '#cfeeff');
+      sky.addColorStop(1, '#d7f7d2');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+
+      // الشمس
+      ctx.fillStyle = '#ffe58a';
+      ctx.beginPath();
+      ctx.arc(w * 0.8, h * 0.16, 42, 0, Math.PI * 2);
+      ctx.fill();
+
+      // الجبال
+      ctx.fillStyle = '#6a8d6a';
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.38);
+      ctx.lineTo(w * 0.15, h * 0.18);
+      ctx.lineTo(w * 0.28, h * 0.38);
+      ctx.lineTo(w * 0.45, h * 0.2);
+      ctx.lineTo(w * 0.62, h * 0.38);
+      ctx.lineTo(w * 0.8, h * 0.22);
+      ctx.lineTo(w, h * 0.38);
+      ctx.lineTo(w, h * 0.55);
+      ctx.lineTo(0, h * 0.55);
+      ctx.closePath();
+      ctx.fill();
     }
 
     function drawRoad() {
       const centerX = w / 2;
-      const roadHalf = w * 0.18;
-      const horizon = h * 0.15;
+      const horizon = h * 0.18;
+      const roadWide = w * 0.72;
+      const roadNarrow = w * 0.26;
 
-      ctx.fillStyle = '#8ed36a';
-      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#4d8f3f';
+      ctx.fillRect(0, horizon, w, h - horizon);
 
-      ctx.fillStyle = '#7cc36f';
-      ctx.beginPath();
-      ctx.moveTo(0, horizon);
-      ctx.lineTo(w, horizon);
-      ctx.lineTo(w, h);
-      ctx.lineTo(0, h);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#3b3b3b';
-      const roadWidthBase = w * 0.3;
-      const roadWidthBottom = w * 0.82;
-      const roadTop = horizon;
-      const roadBottom = h;
-
-      for (let y = 0; y < h; y += 22) {
-        const t = (y / h);
-        const width = roadWidthBase + (roadWidthBottom - roadWidthBase) * t;
-        const x = centerX - width / 2;
-        ctx.fillRect(x, y + (roadScroll * 0.1 % 20), width, 12);
+      // طريق perspective
+      for (let i = 0; i < 32; i++) {
+        const t = i / 32;
+        const y1 = horizon + t * (h - horizon);
+        const y2 = horizon + (t + 0.03) * (h - horizon);
+        const width1 = roadNarrow + (roadWide - roadNarrow) * t;
+        const width2 = roadNarrow + (roadWide - roadNarrow) * (t + 0.03);
+        ctx.fillStyle = i % 2 === 0 ? '#3f3f3f' : '#464646';
+        ctx.beginPath();
+        ctx.moveTo(centerX - width1 / 2, y1);
+        ctx.lineTo(centerX + width1 / 2, y1);
+        ctx.lineTo(centerX + width2 / 2, y2);
+        ctx.lineTo(centerX - width2 / 2, y2);
+        ctx.closePath();
+        ctx.fill();
       }
 
-      // حواف الطريق
-      ctx.strokeStyle = '#f4f4f4';
+      // إضاءة الطريق
+      ctx.strokeStyle = '#d7d7d7';
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(centerX - roadWidthBase / 2, horizon);
-      ctx.lineTo(centerX - roadWidthBottom / 2, h);
+      ctx.moveTo(centerX - roadNarrow / 2, horizon);
+      ctx.lineTo(centerX - roadWide / 2, h);
       ctx.stroke();
-
       ctx.beginPath();
-      ctx.moveTo(centerX + roadWidthBase / 2, horizon);
-      ctx.lineTo(centerX + roadWidthBottom / 2, h);
+      ctx.moveTo(centerX + roadNarrow / 2, horizon);
+      ctx.lineTo(centerX + roadWide / 2, h);
       ctx.stroke();
 
-      // خط وسط الطريق
-      ctx.strokeStyle = '#ffe66d';
+      // خطوط وسط الطريق
+      ctx.strokeStyle = '#ffef8a';
       ctx.lineWidth = 4;
       for (let i = 0; i < 20; i++) {
-        const y = (i * 46 + roadScroll * 0.8) % (h + 60);
+        const p = (i * 52 + (roadScroll * 1.5)) % (h + 120);
+        const y = p;
         ctx.beginPath();
         ctx.moveTo(centerX, y);
         ctx.lineTo(centerX, y + 30);
         ctx.stroke();
       }
+
+      // أضواء جانبية
+      for (let i = 0; i < 12; i++) {
+        const yy = (i * 80 + (roadScroll * 1.2)) % (h + 100);
+        const x1 = centerX - roadWide / 2 - 18;
+        const x2 = centerX + roadWide / 2 + 18;
+        ctx.fillStyle = '#f5f5f5';
+        ctx.fillRect(x1, yy, 10, 30);
+        ctx.fillRect(x2, yy, 10, 30);
+      }
     }
 
-    function drawCar(x, y, w, h, color) {
+    function roundedRect(x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.arcTo(x + width, y, x + width, y + height, radius);
+      ctx.arcTo(x + width, y + height, x, y + height, radius);
+      ctx.arcTo(x, y + height, x, y, radius);
+      ctx.arcTo(x, y, x + width, y, radius);
+      ctx.closePath();
+    }
+
+    function drawCar(x, y, width, height, color) {
       ctx.save();
       ctx.translate(x, y);
-      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
       ctx.beginPath();
-      ctx.ellipse(0, h * 0.45, w * 0.62, h * 0.18, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, height * 0.46, width * 0.6, height * 0.17, 0, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.fillStyle = color;
-      roundRect(ctx, -w / 2, -h / 2, w, h, 10);
+      roundedRect(-width / 2, -height / 2, width, height, 12);
       ctx.fill();
 
-      ctx.fillStyle = '#152238';
-      roundRect(ctx, -w * 0.3, -h * 0.25, w * 0.6, h * 0.36, 8);
+      ctx.fillStyle = '#161d2b';
+      roundedRect(-width * 0.28, -height * 0.28, width * 0.56, height * 0.32, 8);
       ctx.fill();
 
-      ctx.fillStyle = '#f6e7b1';
-      roundRect(ctx, -w * 0.25, -h * 0.48, w * 0.18, h * 0.12, 4);
-      ctx.fill();
-      roundRect(ctx, w * 0.07, -h * 0.48, w * 0.18, h * 0.12, 4);
-      ctx.fill();
+      ctx.fillStyle = '#f7f0b0';
+      ctx.fillRect(-width * 0.22, -height * 0.5, width * 0.18, height * 0.12);
+      ctx.fillRect(width * 0.04, -height * 0.5, width * 0.18, height * 0.12);
 
       ctx.fillStyle = '#111';
-      ctx.fillRect(-w * 0.52, -h * 0.25, w * 0.14, h * 0.22);
-      ctx.fillRect(w * 0.38, -h * 0.25, w * 0.14, h * 0.22);
-      ctx.fillRect(-w * 0.52, h * 0.05, w * 0.14, h * 0.22);
-      ctx.fillRect(w * 0.38, h * 0.05, w * 0.14, h * 0.22);
+      ctx.fillRect(-width * 0.5, -height * 0.25, width * 0.14, height * 0.24);
+      ctx.fillRect(width * 0.36, -height * 0.25, width * 0.14, height * 0.24);
+      ctx.fillRect(-width * 0.5, height * 0.09, width * 0.14, height * 0.24);
+      ctx.fillRect(width * 0.36, height * 0.09, width * 0.14, height * 0.24);
 
       ctx.restore();
     }
 
-    function roundRect(context, x, y, width, height, radius) {
-      context.beginPath();
-      context.moveTo(x + radius, y);
-      context.arcTo(x + width, y, x + width, y + height, radius);
-      context.arcTo(x + width, y + height, x, y + height, radius);
-      context.arcTo(x, y + height, x, y, radius);
-      context.arcTo(x, y, x + width, y, radius);
-      context.closePath();
-    }
-
     function draw() {
       ctx.clearRect(0, 0, w, h);
+      drawSky();
       drawRoad();
 
-      for (const e of enemies) {
-        drawCar(e.x, e.y, e.w, e.h, e.color);
+      for (const enemy of enemies) {
+        drawCar(enemy.x, enemy.y, enemy.w, enemy.h, enemy.color);
       }
 
       drawCar(player.x, player.y, player.w, player.h, player.color);
     }
 
-    function frame(ts) {
-      const dt = Math.min(0.04, (ts - lastTime) / 1000 || 0.016);
+    function animate(ts) {
+      const dt = Math.min(0.05, (ts - lastTime) / 1000 || 0.016);
       lastTime = ts;
       update(dt);
       draw();
-      requestAnimationFrame(frame);
+      requestAnimationFrame(animate);
     }
 
-    function setMove(dir) {
-      moveDir = dir;
-    }
+    function setMove(dir) { moveX = dir; }
 
     leftBtn.addEventListener('pointerdown', () => setMove(-1));
     leftBtn.addEventListener('pointerup', () => setMove(0));
     leftBtn.addEventListener('pointerleave', () => setMove(0));
-
     rightBtn.addEventListener('pointerdown', () => setMove(1));
     rightBtn.addEventListener('pointerup', () => setMove(0));
     rightBtn.addEventListener('pointerleave', () => setMove(0));
@@ -349,13 +404,16 @@
       if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') setMove(-1);
       if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') setMove(1);
     });
+
     document.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a' || e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') setMove(0);
+      if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a' || e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
+        setMove(0);
+      }
     });
 
     startBtn.addEventListener('click', startGame);
     resize();
-    requestAnimationFrame(frame);
+    requestAnimationFrame(animate);
     window.addEventListener('resize', resize);
   </script>
 </body>
