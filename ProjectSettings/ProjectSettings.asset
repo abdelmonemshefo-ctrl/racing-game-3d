@@ -1,0 +1,107 @@
+%YAML 1.1
+%TAG ! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 23
+  productName: Racing Game 3D
+  productionCompanyName: Developer
+  defaultCursor: {fileID: 0}
+  cursorHotspot: {x: 0, y: 0}
+  m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
+  m_ShowUnitySplashScreen: 1
+  m_ShowUnitySplashLogo: 1
+  m_SplashScreenOverlayOpacity: 1
+  m_SplashScreenAnimation: 1
+  m_SplashScreenAnimationSpeed: 1
+  m_SplashScreenLogoPNG: {fileID: 0}
+  m_SplashScreenBackgroundPortrait: {fileID: 0}
+  m_SplashScreenBackgroundLandscape: {fileID: 0}
+  m_SplashScreenBackgroundPortraitUMig: {fileID: 0}
+  m_SplashScreenBackgroundLandscapeUMig: {fileID: 0}
+  m_SplashScreenDarkBackgroundPortrait: {fileID: 0}
+  m_SplashScreenDarkBackgroundLandscape: {fileID: 0}
+  m_SplashScreenDarkBackgroundPortraitUMig: {fileID: 0}
+  m_SplashScreenDarkBackgroundLandscapeUMig: {fileID: 0}
+  m_SplashScreenDarkBackgroundSourcePortrait: {fileID: 0}
+  m_SplashScreenDarkBackgroundSourceLandscape: {fileID: 0}
+  m_SplashScreenDarkBackgroundSourcePortraitUMig: {fileID: 0}
+  m_SplashScreenDarkBackgroundSourceLandscapeUMig: {fileID: 0}
+  m_SplashScreenDarkBackgroundSourcePortraitUMig: {fileID: 0}
+  m_SplashScreenDarkBackgroundSourceLandscapeUMig: {fileID: 0}
+  platformWebGLUseInstancing: 0
+  platformWebGLWasmStreaming: 0
+  webGLTemplate: APPLICATION:Default
+  webGLAnalyzedFileSize: 0
+  webGLDecompressedFileSize: 0
+  webGLUseEmbeddedResources: 1
+  webGLCompressionFormat: 1
+  webGLLinkerTarget: 1
+  webGLThreadsSupport: 0
+  webGLWasmArithmeticExceptions: 0
+  webGLNameFilesAsHashes: 0
+  webGLDataCaching: 1
+  webGLDebugSymbols: 0
+  webGLEmscriptenArgs: 
+  webGLModulesDirectory: 
+  webGLTemplate: APPLICATION:Default
+  webGLBuildSubtarget: 0
+  webGLCompressionFormat: 1
+  webGLLinkerTarget: 1
+  webGLThreadsSupport: 0
+  webGLWasmArithmeticExceptions: 0
+  webGLNameFilesAsHashes: 0
+  webGLDataCaching: 1
+  webGLDebugSymbols: 0
+  webGLEmscriptenArgs: 
+  webGLModulesDirectory: 
+  usePlayPrefs: 0
+  restrictProAssetToTracker: 1
+  scriptingDefineSymbols: {}
+  platformArchitecture: {}
+  scriptingBackend: {}
+  il2CppCompilerConfiguration: {}
+  il2CppStacktraceInformation: 0
+  managedStrippingLevel: {}
+  incrementalIl2CppBuild: {}
+  allowUnsafeCode: 0
+  useDeterministicCompilation: 1
+  enableSetupScript: 0
+  additionalCompilerArguments: {}
+  platformLdLibraryPath: {}
+  scriptingRuntimeVersion: 1
+  gcIncremental: 1
+  gcWBarrier: 2
+  runtimeInitializeOnLoadHelpers: []
+  onDemandRendering: 0
+  metroInputSource: 0
+  wsaTransparentSwapchain: 0
+  m_VideoMemoryBudget: {}
+  m_WebRTC: {}
+  m_RenderingPath: 1
+  m_ActiveColorSpace: 0
+  m_MTRendering: 1
+  mipStripping: 0
+  numberOfMipsStripped: 0
+  copyTextureSupport: 0
+  stackTraceLogType:
+    Default: 2
+    Assert: 1
+    Error: 0
+    Warning: 2
+    Info: 2
+  logObjRef: 0
+  enableCrashReport: 1
+  managerTestListArtifactsFolder: 
+  builtinCounterFrequencyIgnore:
+  - m_BuildTarget: 5
+    m_RemoveCounter: 60
+  abandonchangedSettings: 0
+  disableHierarchyIcons: 0
+  disableAnnotationIcon: 0
+  StereoRenderingPath: 0
+  sRGBBaking: 0
+  allowEnlightenSupportForUpgradedProject: 1
+  Rig: 0
+  PositionWalker: 0
+  MonoBlackboxPath:
